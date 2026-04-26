@@ -521,32 +521,24 @@ Import these files for API testing:
 <img src="https://github.com/giasinguyen.png" width="80px;" style="border-radius:50%;" alt=""/><br/>
 <sub><b>Nguyễn Trần Gia Sĩ</b></sub>
 </a><br/>
-<sub>🎯 Team Lead</sub><br/>
-<sub>Backend Developer</sub>
 </td>
 <td align="center">
 <a href="https://github.com/nvminh162">
 <img src="https://github.com/nvminh162.png" width="80px;" style="border-radius:50%;" alt=""/><br/>
 <sub><b>Nguyễn Văn Minh</b></sub>
 </a><br/>
-<sub>🎨 Frontend</sub><br/>
-<sub>UI/UX Developer</sub>
 </td>
 <td align="center">
 <a href="https://github.com/NguyenNguyen0">
 <img src="https://github.com/NguyenNguyen0.png" width="80px;" style="border-radius:50%;" alt=""/><br/>
 <sub><b>Nguyễn Trung Nguyên</b></sub>
 </a><br/>
-<sub>⚙️ Backend</sub><br/>
-<sub>API Developer</sub>
 </td>
 <td align="center">
 <a href="https://github.com/NguyenDuyKhai2">
 <img src="https://github.com/NguyenDuyKhai2.png" width="80px;" style="border-radius:50%;" alt=""/><br/>
 <sub><b>Nguyễn Duy Khải</b></sub>
 </a><br/>
-<sub>🎨 Frontend</sub><br/>
-<sub>UI Developer</sub>
 </td>
 </tr>
 </table>
