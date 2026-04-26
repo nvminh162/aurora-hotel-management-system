@@ -1,18 +1,14 @@
 package com.aurora.backend.service.impl;
 
-import com.aurora.backend.config.MailjetConfig;
 import com.aurora.backend.entity.Booking;
-import com.aurora.backend.entity.BookingRoom;
 import com.aurora.backend.service.EmailService;
-import com.mailjet.client.MailjetClient;
-import com.mailjet.client.MailjetRequest;
-import com.mailjet.client.MailjetResponse;
-import com.mailjet.client.resource.Emailv31;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -20,8 +16,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
-import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -31,8 +27,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EmailServiceImpl implements EmailService {
 
-    private final MailjetClient mailjetClient;
-    private final MailjetConfig mailjetConfig;
+    private final JavaMailSender mailSender;
+
+    @Value("${app.mail.from-email:${SMTP_USERNAME:noreply@aurorahotel.com}}")
+    private String fromEmail;
+
+    @Value("${app.mail.from-name:Aurora Hotel System}")
+    private String fromName;
     
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
@@ -65,67 +66,49 @@ public class EmailServiceImpl implements EmailService {
             String htmlContent = generateBookingConfirmationHtml(booking);
             log.info("=== EMAIL SERVICE: HTML content generated, length: {}", htmlContent.length());
             
-            // Load banner image and encode to base64
+            // Load banner image to embed inline in email
             log.info("=== EMAIL SERVICE: Loading banner image...");
-            String bannerBase64 = loadBannerImage();
-            log.info("=== EMAIL SERVICE: Banner loaded, base64 length: {}", bannerBase64.length());
+            ClassPathResource bannerImage = loadBannerImage();
 
-            log.info("=== EMAIL SERVICE: Building Mailjet request...");
+            log.info("=== EMAIL SERVICE: Building SMTP email message...");
             log.info("=== EMAIL SERVICE: From: {} <{}>, To: {} <{}>", 
-                mailjetConfig.getFromName(), mailjetConfig.getFromEmail(), customerName, customerEmail);
-            
-            // Build Mailjet request with inline image
-            MailjetRequest request = new MailjetRequest(Emailv31.resource)
-                .property(Emailv31.MESSAGES, new JSONArray()
-                    .put(new JSONObject()
-                        .put(Emailv31.Message.FROM, new JSONObject()
-                            .put("Email", mailjetConfig.getFromEmail())
-                            .put("Name", mailjetConfig.getFromName()))
-                        .put(Emailv31.Message.TO, new JSONArray()
-                            .put(new JSONObject()
-                                .put("Email", customerEmail)
-                                .put("Name", customerName)))
-                        .put(Emailv31.Message.SUBJECT, "Xác nhận đặt phòng - " + booking.getBookingCode())
-                        .put(Emailv31.Message.HTMLPART, htmlContent)
-                        .put(Emailv31.Message.INLINEDATTACHMENTS, new JSONArray()
-                            .put(new JSONObject()
-                                .put("ContentType", "image/jpeg")
-                                .put("Filename", "aurora-banner.jpg")
-                                .put("ContentID", "aurora-banner")
-                                .put("Base64Content", bannerBase64)))
-                        .put(Emailv31.Message.CUSTOMID, "BookingConfirmation-" + booking.getBookingCode())));
+                fromName, fromEmail, customerName, customerEmail);
 
-            log.info("=== EMAIL SERVICE: Sending email via Mailjet...");
-            // Send email
-            MailjetResponse response = mailjetClient.post(request);
-            
-            log.info("=== EMAIL SERVICE: Mailjet response status: {}", response.getStatus());
-            log.info("=== EMAIL SERVICE: Mailjet response data: {}", response.getData());
-            
-            if (response.getStatus() == 200) {
-                log.info("=== EMAIL SERVICE: ✅ Email sent successfully to: {} for booking: {}", 
-                    customerEmail, booking.getBookingCode());
-                booking.setEmailSent(true);
-            } else {
-                log.error("=== EMAIL SERVICE: ❌ Failed to send email. Status: {}, Response: {}", 
-                    response.getStatus(), response.getData());
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(
+                message,
+                true,
+                StandardCharsets.UTF_8.name()
+            );
+
+            helper.setFrom(fromEmail, fromName);
+            helper.setTo(customerEmail);
+            helper.setSubject("Xác nhận đặt phòng - " + booking.getBookingCode());
+            helper.setText(htmlContent, true);
+
+            if (bannerImage != null && bannerImage.exists()) {
+                helper.addInline("aurora-banner", bannerImage, "image/jpeg");
             }
+
+            log.info("=== EMAIL SERVICE: Sending email via Gmail SMTP...");
+            mailSender.send(message);
+            log.info("=== EMAIL SERVICE: Email sent successfully to: {} for booking: {}",
+                customerEmail, booking.getBookingCode());
+            booking.setEmailSent(true);
             
         } catch (Exception e) {
-            log.error("=== EMAIL SERVICE: ❌ Exception while sending email for booking: {}", 
+            log.error("=== EMAIL SERVICE: Exception while sending email for booking: {}", 
                 booking.getBookingCode(), e);
         }
     }
     
-    private String loadBannerImage() throws IOException {
-        try {
-            ClassPathResource imageResource = new ClassPathResource("images/aurora-banner.jpg");
-            byte[] imageBytes = imageResource.getInputStream().readAllBytes();
-            return Base64.getEncoder().encodeToString(imageBytes);
-        } catch (IOException e) {
-            log.warn("Could not load banner image, email will be sent without banner", e);
-            return "";
+    private ClassPathResource loadBannerImage() {
+        ClassPathResource imageResource = new ClassPathResource("images/aurora-banner.jpg");
+        if (!imageResource.exists()) {
+            log.warn("Banner image not found, email will be sent without banner");
+            return null;
         }
+        return imageResource;
     }
 
     private String generateBookingConfirmationHtml(Booking booking) {

@@ -51,6 +51,23 @@ spring:
           min-idle: 0
           max-wait: -1ms
 
+  # Email SMTP Configuration (Gmail)
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
   #  Multipart file config
   spring:
     servlet:
@@ -77,7 +94,7 @@ langchain4j:
       log-requests-and-responses: true
     embedding-model:
       api-key: ${GEMINI_AI_KEY}
-      model-name: text-embedding-004
+      model-name: gemini-embedding-001
       output-dimensionality: 768
       log-requests-and-responses: false
 
@@ -96,9 +113,9 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   secure: ${CLOUDINARY_SECURE:true}
-# Mailjet Configuration
-mailjet:
-  api-key: ${MAILJET_API_KEY}
-  secret-key: ${MAILJET_SECRET_KEY}
-  from-email: ${MAILJET_FROM_EMAIL:noreply@aurorahotel.com}
-  from-name: ${MAILJET_FROM_NAME:Aurora Hotel System}
+
+# Email sender identity
+app:
+  mail:
+    from-email: ${MAIL_FROM_EMAIL:${SMTP_USERNAME:noreply@aurorahotel.com}}
+    from-name: ${MAIL_FROM_NAME:Aurora Hotel System}
