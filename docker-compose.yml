@@ -21,6 +21,8 @@ services:
       retries: 5
     networks:
       - aurora-network
+    env_file:
+      - .env
 
   # Redis service for caching and session management
   redis:
@@ -41,6 +43,8 @@ services:
       retries: 3
     networks:
       - aurora-network
+    env_file:
+      - .env
 
   # Backend service
   aurora-backend:
@@ -50,6 +54,8 @@ services:
     image: ${DOCKERHUB_USERNAME:-yourusername}/aurora-backend:latest
     container_name: aurora_backend
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - DB_URL=jdbc:postgresql://rag_postgres:5432/${DB_NAME:-aurora_hotel}
