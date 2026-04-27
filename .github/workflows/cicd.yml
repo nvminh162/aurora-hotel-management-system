@@ -46,10 +46,32 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           envs: DOCKERHUB_USERNAME,DOCKERHUB_PASSWORD
           script: |
-            cd /home/ubuntu/app/aurora-hotel-management-system
-            git pull origin master
-            echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
-            docker compose pull aurora-backend aurora-frontend
-            docker compose up -d
-            docker system prune -f
+            TARGET_DIR="/home/ubuntu/app/aurora-hotel-management-system"
+            
+            # 1. Tạo thư mục và lấy code
+            mkdir -p $TARGET_DIR
+            cd $TARGET_DIR
+            
+            if [ ! -d ".git" ]; then
+              echo "Thư mục trống, đang tiến hành clone code..."
+              git clone https://github.com/${{ github.repository }}.git .
+            else
+              echo "Đã có code, đang cập nhật..."
+              git fetch origin master
+              git reset --hard origin/master
+            fi
+            
+            # 2. Đăng nhập Docker Hub (dùng sudo để tránh lỗi quyền)
+            echo "${{ secrets.DOCKERHUB_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # 3. Chuẩn bị biến và chạy Docker Compose
+            USER_LOWER=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
+            
+            # Pull và Up (dùng sudo)
+            sudo DOCKERHUB_USERNAME=$USER_LOWER docker compose pull
+            sudo DOCKERHUB_USERNAME=$USER_LOWER docker compose up -d
+            
+            # Dọn dẹp
+            sudo docker system prune -f
+
 
