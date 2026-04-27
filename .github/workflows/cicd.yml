@@ -47,24 +47,37 @@ jobs:
           envs: DOCKERHUB_USERNAME,DOCKERHUB_PASSWORD
           script: |
             TARGET_DIR="/home/ubuntu/app/aurora-hotel-management-system"
+            echo "--- DEBUG INFO ---"
+            echo "Hostname: $(hostname -I)"
+            echo "User: $(whoami)"
+            echo "Target Directory: $TARGET_DIR"
             
             # 1. Tạo thư mục và lấy code
             mkdir -p $TARGET_DIR
-            cd $TARGET_DIR
+            cd $TARGET_DIR || { echo "Lỗi: Không thể chuyển vào thư mục $TARGET_DIR"; exit 1; }
+            echo "Đang ở tại: $(pwd)"
             
             if [ ! -d ".git" ]; then
               echo "Thư mục trống, đang tiến hành clone code..."
-              git clone https://github.com/${{ github.repository }}.git .
+              git clone https://github.com/${{ github.repository }}.git . || { echo "Lỗi: Clone thất bại!"; exit 1; }
             else
               echo "Đã có code, đang cập nhật..."
-              git fetch origin master
-              git reset --hard origin/master
+              git fetch origin master && git reset --hard origin/master || { echo "Lỗi: Cập nhật thất bại!"; exit 1; }
             fi
             
-            # 2. Đăng nhập Docker Hub (dùng sudo để tránh lỗi quyền)
+            echo "--- DANH SÁCH FILE SAU KHI LẤY CODE ---"
+            ls -la
+            
+            # 2. Tạo file .env nếu có secret ENV_FILE (tùy chọn)
+            if [ ! -z "${{ secrets.ENV_FILE }}" ]; then
+              echo "Đang tạo file .env từ Secret..."
+              echo "${{ secrets.ENV_FILE }}" > .env
+            fi
+            
+            # 3. Đăng nhập Docker Hub
             echo "${{ secrets.DOCKERHUB_PASSWORD }}" | sudo docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
             
-            # 3. Chuẩn bị biến và chạy Docker Compose
+            # 4. Chuẩn bị biến và chạy Docker Compose
             USER_LOWER=$(echo "${{ secrets.DOCKERHUB_USERNAME }}" | tr '[:upper:]' '[:lower:]')
             
             # Pull và Up (dùng sudo)
@@ -73,5 +86,3 @@ jobs:
             
             # Dọn dẹp
             sudo docker system prune -f
-
-
