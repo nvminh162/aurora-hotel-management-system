@@ -1,4 +1,4 @@
-PROJECT_DIR="/home/ubuntu/project"
+PROJECT_DIR="/home/ubuntu"
 REPO_URL="git@github.com:nvminh162/aurora-hotel-management-system.git"
 
 # Check if project directory exists, if not clone it via SSH
