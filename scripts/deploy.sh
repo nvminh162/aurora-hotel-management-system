@@ -1,24 +1,31 @@
-PROJECT_DIR="/home/ubuntu"
+#!/bin/bash
+# Stop on error
+set -e
+
+# PHẢI là đường dẫn vào thư mục dự án, không phải thư mục /home/ubuntu
+PROJECT_DIR="/home/ubuntu/aurora-hotel-management-system"
 REPO_URL="git@github.com:nvminh162/aurora-hotel-management-system.git"
 
-# Check if project directory exists, if not clone it via SSH
+# 1. Kiểm tra và Clone nếu chưa có
 if [ ! -d "$PROJECT_DIR" ]; then
-    echo "Directory $PROJECT_DIR not found. Cloning private repository via SSH..."
+    echo "Dự án chưa tồn tại tại $PROJECT_DIR. Đang tiến hành clone..."
     git clone "$REPO_URL" "$PROJECT_DIR"
 fi
 
-cd "$PROJECT_DIR" || { echo "Failed to enter $PROJECT_DIR"; exit 1; }
+cd "$PROJECT_DIR"
+echo "Đã vào thư mục: $(pwd)"
 
-# Get current branch
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-echo "Deploying with branch: $BRANCH"
+# 2. Cập nhật code từ GitHub
+echo "Đang lấy code mới nhất..."
+git fetch origin master
+git reset --hard origin/master
 
-git fetch -a
-git checkout $BRANCH
-git pull
+# 3. Khởi động lại dịch vụ backend
+echo "Đang cập nhật Docker Image và khởi động lại backend..."
+docker compose pull backend
+docker compose up -d backend
 
-docker compose -f docker-compose.yml down
-# Build/Pull and start the backend service
-docker compose -f docker-compose.yml pull backend
-docker compose -f docker-compose.yml up -d backend
-docker system prune -af
+# 4. Dọn dẹp tài nguyên thừa
+docker system prune -f
+
+echo "Deploy thành công!"
