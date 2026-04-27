@@ -1,0 +1,16 @@
+services:
+  backend:
+    build:
+      context: ./aurora-backend
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/aurora-backend:latest
+    restart: always
+
+  frontend:
+    build:
+      context: ./aurora-frontend
+      dockerfile: Dockerfile
+    image: ${DOCKER_USERNAME}/aurora-frontend:latest
+    restart: always
+    depends_on:
+      - backend

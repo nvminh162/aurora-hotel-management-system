@@ -21,8 +21,8 @@ jobs:
               env:
                   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
               run: |
-                  docker compose -f docker-compose.yml build discoveryserver
-                  docker compose -f docker-compose.yml push discoveryserver
+                  docker compose build backend
+                  docker compose push backend
 
     deploy:
         needs: build-and-push
