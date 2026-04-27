@@ -1,0 +1,111 @@
+services:
+  # Database service with pgvector
+  rag_postgres:
+    image: pgvector/pgvector:pg16
+    container_name: aurora_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin}
+      POSTGRES_DB: ${DB_NAME:-aurora_hotel}
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "5432:5432"
+    volumes:
+      - aurora_pgdata:/var/lib/postgresql/data
+      - ./aurora-backend/src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-admin} -d ${DB_NAME:-aurora_hotel}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aurora-network
+
+  # Redis service for caching and session management
+  redis:
+    image: redis:7.2-alpine
+    container_name: aurora_redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "6379:6379"
+    volumes:
+      - aurora_redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-admin}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-admin}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - aurora-network
+
+  # Backend service
+  aurora-backend:
+    build:
+      context: ./aurora-backend
+      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME:-yourusername}/aurora-backend:latest
+    container_name: aurora_backend
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_URL=jdbc:postgresql://rag_postgres:5432/${DB_NAME:-aurora_hotel}
+      - DB_USERNAME=${DB_USERNAME:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-admin}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-admin}
+      - JWT_SIGNER_KEY=${JWT_SIGNER_KEY}
+      - GEMINI_AI_KEY=${GEMINI_AI_KEY}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USERNAME=${SMTP_USERNAME}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - VNPAY_TMN_CODE=${VNPAY_TMN_CODE}
+      - VNPAY_HASH_SECRET=${VNPAY_HASH_SECRET}
+      - VNPAY_RETURN_URL=${VNPAY_RETURN_URL}
+      - VNPAY_IPN_URL=${VNPAY_IPN_URL}
+    depends_on:
+      rag_postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - aurora-network
+
+  # Frontend service
+  aurora-frontend:
+    build:
+      context: ./aurora-frontend
+      dockerfile: Dockerfile
+    image: ${DOCKERHUB_USERNAME:-yourusername}/aurora-frontend:latest
+    container_name: aurora_frontend
+    restart: unless-stopped
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080/}
+      - VITE_CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - VITE_CLOUDINARY_UPLOAD_PRESET=${VITE_CLOUDINARY_UPLOAD_PRESET}
+      - PORT=80
+    ports:
+      - "80:80"
+    depends_on:
+      - aurora-backend
+    networks:
+      - aurora-network
+
+
+networks:
+  aurora-network:
+    driver: bridge
+
+volumes:
+  aurora_pgdata:
+  aurora_redis_data:
