@@ -46,7 +46,7 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           envs: DOCKERHUB_USERNAME,DOCKERHUB_PASSWORD
           script: |
-            cd /app/aurora-hotel-management-system/
+            cd /home/ubuntu/app/aurora-hotel-management-system
             git pull origin master
             echo "${DOCKERHUB_PASSWORD}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
             docker compose pull aurora-backend aurora-frontend
