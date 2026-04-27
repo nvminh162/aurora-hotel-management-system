@@ -1,5 +1,5 @@
 # 🌌 Aurora Hotel Management System - Backend
-
+ 
 > Enterprise-grade hotel management REST API built with **Spring Boot 3.5.5**, **Java 21**, **PostgreSQL 16**, and **pgvector** for AI-powered features.  
 > Part of the Aurora Hotel Management System ecosystem.
 
