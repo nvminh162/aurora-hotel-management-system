@@ -1,9 +1,18 @@
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
+PROJECT_DIR="/home/ubuntu/project"
+REPO_URL="git@github.com:nvminh162/aurora-hotel-management-system.git"
 
+# Check if project directory exists, if not clone it via SSH
+if [ ! -d "$PROJECT_DIR" ]; then
+    echo "Directory $PROJECT_DIR not found. Cloning private repository via SSH..."
+    git clone "$REPO_URL" "$PROJECT_DIR"
+fi
+
+cd "$PROJECT_DIR" || { echo "Failed to enter $PROJECT_DIR"; exit 1; }
+
+# Get current branch
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "Deploying with branch: $BRANCH"
 
-# Navigate to the project directory
-cd ~/aurora-hotel-management-system/
 git fetch -a
 git checkout $BRANCH
 git pull
