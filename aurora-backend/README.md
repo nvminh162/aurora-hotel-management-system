@@ -15,7 +15,7 @@
 ![Maven](https://img.shields.io/badge/Maven-3.9-c71a36?logo=apachemaven&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain4j-latest-00b4a9?logo=chainlink&logoColor=white)
 ![License](https://img.shields.io/badge/license-Educational-blue.svg)
-
+    
 ---
 
 ## 📋 Table of Contents
