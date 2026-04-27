@@ -52,4 +52,4 @@ jobs:
             docker compose pull aurora-backend aurora-frontend
             docker compose up -d
             docker system prune -f
-
+
