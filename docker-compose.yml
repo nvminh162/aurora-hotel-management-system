@@ -12,6 +12,8 @@ services:
       # - VITE_CLOUDINARY_UPLOAD_PRESET=${VITE_CLOUDINARY_UPLOAD_PRESET}
     depends_on:
       - aurora-backend
+    networks:
+      - aurora-network
   aurora-backend:
     build:
       context: .
@@ -46,8 +48,14 @@ services:
       - SMTP_USERNAME=${SMTP_USERNAME}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - MAIL_FROM_EMAIL=${MAIL_FROM_EMAIL}
-      - MAIL_FROM_NAME=${MAIL_FROM_NAME}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+    depends_on:
+      rag_postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - aurora-network
   rag_postgres:
     image: pgvector/pgvector:pg16
     container_name: rag_postgres
@@ -67,6 +75,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - aurora-network
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: aurora_pgadmin
@@ -77,7 +87,10 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      - rag_postgres
+      rag_postgres:
+        condition: service_healthy
+    networks:
+      - aurora-network
   redis:
     image: redis:7.2-alpine
     container_name: aurora-redis
@@ -94,6 +107,8 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    networks:
+      - aurora-network
   redisinsight:
     image: redis/redisinsight:latest
     container_name: aurora_redisinsight
@@ -105,9 +120,16 @@ services:
     environment:
       RITRUSTEDORIGINS: "http://localhost:8001,http://127.0.0.1:8001"
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
+    networks:
+      - aurora-network
 
 volumes:
   rag_pgdata:
   redis_data:
   redisinsight_data:
+
+networks:
+  aurora-network:
+    driver: bridge
