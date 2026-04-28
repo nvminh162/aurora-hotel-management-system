@@ -41,4 +41,4 @@ jobs:
                   key: ${{ secrets.SERVER_KEY }}
                   port: ${{ secrets.SERVER_PORT }}
                   envs: DOCKER_USERNAME
-                  script_path: deploy.sh
+                  script_path: .github/workflows/deploy.sh
