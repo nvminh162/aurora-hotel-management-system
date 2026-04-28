@@ -12,7 +12,14 @@ import type {
 import { getSessionMeta } from "@/utils/sessionHelper";
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined' && window._env_?.VITE_API_BASE_URL) {
+    return window._env_.VITE_API_BASE_URL;
+  }
+  return import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Register a new user account (no authentication required)
