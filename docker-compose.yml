@@ -14,3 +14,69 @@ services:
     restart: always
     depends_on:
       - backend
+  rag_postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rag_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: aurora_hotel
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "5432:5432"
+    volumes:
+      - rag_pgdata:/var/lib/postgresql/data
+      - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d aurora_hotel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: aurora_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - rag_postgres
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: aurora-redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass admin
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "admin", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: aurora_redisinsight
+    restart: unless-stopped
+    ports:
+      - "8001:5540"
+    volumes:
+      - redisinsight_data:/data
+    environment:
+      RITRUSTEDORIGINS: "http://localhost:8001,http://127.0.0.1:8001"
+    depends_on:
+      - redis
+
+volumes:
+  rag_pgdata:
+  redis_data:
+  redisinsight_data:

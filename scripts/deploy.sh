@@ -1,24 +1,34 @@
-PROJECT_DIR="/home/ubuntu/aurora-hotel-management-system"
-REPO_URL="git@github.com:nvminh162/aurora-hotel-management-system.git"
+#!/bin/bash
 
-# Check if project directory exists, if not clone it via SSH
+# Configuration
+PROJECT_DIR="/home/ubuntu/aurora-hotel-management-system"
+echo "Starting deployment in $PROJECT_DIR..."
+
+# Check if project directory exists
 if [ ! -d "$PROJECT_DIR" ]; then
-    echo "Directory $PROJECT_DIR not found. Cloning private repository via SSH..."
-    git clone "$REPO_URL" "$PROJECT_DIR"
+    echo "Error: Directory $PROJECT_DIR not found."
+    exit 1
 fi
 
-cd "$PROJECT_DIR" || { echo "Failed to enter $PROJECT_DIR"; exit 1; }
+cd "$PROJECT_DIR" || exit 1
 
-# Get current branch
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-echo "Deploying with branch: $BRANCH"
+# Pull latest changes from git (optional if using Docker Hub images mostly)
+echo "Pulling latest code..."
+git pull origin master
 
-git fetch -a
-git checkout $BRANCH
-git pull
+# Pull the latest backend image from Docker Hub
+echo "Pulling latest backend image..."
+docker compose pull backend
 
-docker compose -f docker-compose.yml down
-# Build/Pull and start the backend service
-docker compose -f docker-compose.yml pull backend
-docker compose -f docker-compose.yml up -d backend
-docker system prune -af
+# Restart the backend service
+echo "Restarting backend service..."
+docker compose up -d backend
+
+# Optional: restart other essential services if they are not running
+# docker compose up -d rag_postgres redis
+
+# Clean up old images
+echo "Cleaning up old images..."
+docker image prune -f
+
+echo "Deployment completed successfully!"
