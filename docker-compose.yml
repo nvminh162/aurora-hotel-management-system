@@ -1,4 +1,17 @@
 services:
+  aurora-frontend:
+    build:
+      context: ./aurora-frontend
+      dockerfile: Dockerfile
+    image: "${DOCKER_USERNAME}/aurora-frontend:latest"
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL}
+      # - VITE_CLOUDINARY_CLOUD_NAME=${VITE_CLOUDINARY_CLOUD_NAME}
+      # - VITE_CLOUDINARY_UPLOAD_PRESET=${VITE_CLOUDINARY_UPLOAD_PRESET}
+    depends_on:
+      - aurora-backend
   aurora-backend:
     build:
       context: .

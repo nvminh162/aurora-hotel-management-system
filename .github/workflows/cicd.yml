@@ -21,8 +21,8 @@ jobs:
               env:
                   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
               run: |
-                  docker compose -f docker-compose.yml build aurora-backend
-                  docker compose -f docker-compose.yml push aurora-backend
+                  docker compose -f docker-compose.yml build aurora-backend aurora-frontend
+                  docker compose -f docker-compose.yml push aurora-backend aurora-frontend
 
     deploy:
         needs: build-and-push
