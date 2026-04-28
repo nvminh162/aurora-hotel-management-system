@@ -1,19 +1,13 @@
 services:
-  backend:
+  aurora-backend:
     build:
-      context: ./aurora-backend
-      dockerfile: Dockerfile
-    image: ${DOCKER_USERNAME}/aurora-backend:latest
-    restart: always
-
-  frontend:
-    build:
-      context: ./aurora-frontend
-      dockerfile: Dockerfile
-    image: ${DOCKER_USERNAME}/aurora-frontend:latest
-    restart: always
-    depends_on:
-      - backend
+      context: .
+      dockerfile: aurora-backend/Dockerfile
+    image: "${DOCKER_USERNAME}/aurora-backend:latest"
+    ports:
+      - "8080:8080"
+    networks:
+      - aurora-network
   rag_postgres:
     image: pgvector/pgvector:pg16
     container_name: rag_postgres
@@ -33,7 +27,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: aurora_pgadmin
@@ -45,7 +38,6 @@ services:
       - "5050:80"
     depends_on:
       - rag_postgres
-
   redis:
     image: redis:7.2-alpine
     container_name: aurora-redis
@@ -62,7 +54,6 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-
   redisinsight:
     image: redis/redisinsight:latest
     container_name: aurora_redisinsight

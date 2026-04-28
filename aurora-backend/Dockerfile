@@ -1,24 +1,29 @@
-# Stage 1: Build the application
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS build
+# ==========================================
+# Giai đoạn 1: Build ứng dụng bằng Maven
+# https://hub.docker.com/_/maven
+# ==========================================
+# Sử dụng image Maven 3.9.12 với JDK 21 (Eclipse Temurin) làm môi trường build
+FROM maven:3.9.12-eclipse-temurin-21 AS build
+# Đặt thư mục làm việc trong container là /app
 WORKDIR /app
-
-# Copy pom.xml and download dependencies (cached layer)
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-# Copy source code and build
-COPY src ./src
+# Sao chép mã nguồn của aurora-backend từ thư mục gốc dự án (build context) vào container
+COPY ./aurora-backend ./aurora-backend
+# Chuyển vào thư mục dự án aurora-backend để thực hiện build
+WORKDIR /app/aurora-backend
+# Chạy lệnh Maven để build ứng dụng, bỏ qua việc chạy test để tăng tốc độ build
 RUN mvn clean package -DskipTests
 
-# Stage 2: Run the application
-FROM eclipse-temurin:21-jre-alpine
+# ==========================================
+# Giai đoạn 2: Chạy ứng dụng bằng OpenJDK 21
+# https://hub.docker.com/_/eclipse-temurin/tags?name=21
+# ==========================================
+# Sử dụng image JRE 21 (Jammy = Ubuntu 22.04) - nhẹ hơn JDK vì chỉ cần môi trường chạy, không cần biên dịch
+FROM eclipse-temurin:21-jre-jammy
+# Đặt thư mục làm việc trong container là /app
 WORKDIR /app
-
-# Copy the built jar file
-COPY --from=build /app/target/*.jar app.jar
-
-# Set environment variables for production if needed
-# ENV SPRING_PROFILES_ACTIVE=prod
-
-EXPOSE 9001
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Sao chép file JAR đã build từ giai đoạn 1 (build stage) sang giai đoạn hiện tại
+COPY --from=build /app/aurora-backend/target/*.jar aurora-backend.jar
+# Khai báo cổng 8080 mà ứng dụng lắng nghe (cổng mặc định của Eureka Discovery Server)
+EXPOSE 8080
+# Lệnh khởi động ứng dụng khi container chạy
+ENTRYPOINT ["java", "-jar", "aurora-backend.jar"]
