@@ -9,7 +9,6 @@ services:
       - "5432:5432"
     volumes:
       - rag_pgdata:/var/lib/postgresql/data
-      - ./src/main/resources/db/init-db-pg-admin.sql:/docker-entrypoint-initdb.d/init-db-pg-admin.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s

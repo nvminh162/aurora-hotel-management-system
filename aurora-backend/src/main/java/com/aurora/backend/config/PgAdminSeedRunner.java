@@ -19,7 +19,7 @@ import java.sql.Statement;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class PgAdminSeedRunner {
 
     private final DataSource dataSource;
