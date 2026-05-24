@@ -6,10 +6,8 @@
 FROM maven:3.9.12-eclipse-temurin-21 AS build
 # Đặt thư mục làm việc trong container là /app
 WORKDIR /app
-# Sao chép mã nguồn của aurora-backend từ thư mục gốc dự án (build context) vào container
-COPY ./aurora-backend ./aurora-backend
-# Chuyển vào thư mục dự án aurora-backend để thực hiện build
-WORKDIR /app/aurora-backend
+# Sao chép mã nguồn backend vào container
+COPY . .
 # Chạy lệnh Maven để build ứng dụng, bỏ qua việc chạy test để tăng tốc độ build
 RUN mvn clean package -DskipTests
 
@@ -22,7 +20,7 @@ FROM eclipse-temurin:21-jre-jammy
 # Đặt thư mục làm việc trong container là /app
 WORKDIR /app
 # Sao chép file JAR đã build từ giai đoạn 1 (build stage) sang giai đoạn hiện tại
-COPY --from=build /app/aurora-backend/target/*.jar aurora-backend.jar
+COPY --from=build /app/target/*.jar aurora-backend.jar
 # Khai báo cổng 8080 mà ứng dụng lắng nghe (cổng mặc định của Eureka Discovery Server)
 EXPOSE 8080
 # Lệnh khởi động ứng dụng khi container chạy

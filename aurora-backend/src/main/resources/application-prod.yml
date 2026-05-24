@@ -13,7 +13,6 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
-  # Database Initial Configuration
   sql:
     init:
       mode: always
@@ -36,8 +35,7 @@ spring:
         order_inserts: true
         order_updates: true
     defer-datasource-initialization: true
-  
-  # Redis Configuration
+
   data:
     redis:
       host: ${REDIS_HOST}
@@ -51,7 +49,6 @@ spring:
           min-idle: 0
           max-wait: -1ms
 
-  # Email SMTP Configuration (Gmail)
   mail:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}
@@ -68,20 +65,17 @@ spring:
           timeout: 5000
           writetimeout: 5000
 
-  #  Multipart file config
   spring:
     servlet:
       multipart:
         max-file-size: 10MB
         max-request-size: 10MB
 
-# JWT Configuration
 jwt:
   signerKey: ${JWT_SIGNER_KEY}
   valid-duration: ${ACCESS_TOKEN_VALID_DURATION}
   refreshable-duration: ${REFRESH_TOKEN_VALID_DURATION}
 
-# Langchain4j
 langchain4j:
   google-ai-gemini:
     chat-model:
@@ -98,7 +92,6 @@ langchain4j:
       output-dimensionality: 768
       log-requests-and-responses: false
 
-# VNPay Configuration
 vnpay:
   tmn-code: ${VNPAY_TMN_CODE:3GZ6D197}
   hash-secret: ${VNPAY_HASH_SECRET:GXONS066262VR15QOF8S4BTEN38DX3HV}
@@ -107,14 +100,12 @@ vnpay:
   ipn-url: ${VNPAY_IPN_URL:http://localhost:8080/api/v1/payments/vnpay/ipn}
   timezone: Asia/Ho_Chi_Minh
 
-# Cloudinary Configuration
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   secure: ${CLOUDINARY_SECURE:true}
 
-# Email sender identity
 app:
   mail:
     from-email: ${MAIL_FROM_EMAIL:${SMTP_USERNAME:noreply@aurorahotel.com}}
