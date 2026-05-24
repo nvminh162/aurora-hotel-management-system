@@ -20,10 +20,10 @@ jobs:
             - name: Build and Push images
               env:
                   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+              working-directory: aurora-backend
               run: |
-                  cp aurora-backend/.env.example aurora-backend/.env
-                  docker compose -f aurora-backend/docker-compose.yml build aurora-backend
-                  docker compose -f aurora-backend/docker-compose.yml push aurora-backend
+                  docker build -t "${DOCKER_USERNAME}/aurora-backend:latest" .
+                  docker push "${DOCKER_USERNAME}/aurora-backend:latest"
 
     deploy:
         needs: build-and-push

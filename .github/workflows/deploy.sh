@@ -5,6 +5,5 @@ git fetch -a
 git checkout master
 git pull origin master
 
-docker compose -f docker-compose.yml pull aurora-backend
-docker compose -f docker-compose.yml up -d aurora-backend
+docker compose up -d --pull always
 docker system prune -af

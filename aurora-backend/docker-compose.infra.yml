@@ -1,0 +1,77 @@
+services:
+  rag_postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rag_postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - rag_pgdata:/var/lib/postgresql/data
+      - ./src/main/resources/db/init-db-pg-admin.sql:/docker-entrypoint-initdb.d/init-db-pg-admin.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aurora-network
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: aurora_pgadmin
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5050:80"
+    depends_on:
+      rag_postgres:
+        condition: service_healthy
+    networks:
+      - aurora-network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: aurora-redis
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: sh -c 'redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"'
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - aurora-network
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: aurora_redisinsight
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8001:5540"
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - aurora-network
+
+volumes:
+  rag_pgdata:
+  redis_data:
+  redisinsight_data:
+
+networks:
+  aurora-network:
+    driver: bridge
