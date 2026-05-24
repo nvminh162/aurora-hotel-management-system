@@ -9,11 +9,6 @@ services:
       - "5432:5432"
     volumes:
       - rag_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks:
       - aurora-network
 
@@ -26,8 +21,7 @@ services:
     ports:
       - "5050:80"
     depends_on:
-      rag_postgres:
-        condition: service_healthy
+      - rag_postgres
     networks:
       - aurora-network
 
@@ -42,11 +36,6 @@ services:
     volumes:
       - redis_data:/data
     command: sh -c 'redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"'
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
     networks:
       - aurora-network
 
@@ -61,8 +50,7 @@ services:
     volumes:
       - redisinsight_data:/data
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     networks:
       - aurora-network
 
