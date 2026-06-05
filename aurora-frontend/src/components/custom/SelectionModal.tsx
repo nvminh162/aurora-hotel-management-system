@@ -17,6 +17,24 @@ import { X, Loader2 } from "lucide-react";
 // import englishFlag from "@/assets/images/commons/english.png";
 // import vietnamFlag from "@/assets/images/commons/vietnam.png";
 
+const normalizeText = (value?: string) =>
+  (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const isHoChiMinhBranch = (branch: Branch) => {
+  const city = normalizeText(branch.city);
+  const name = normalizeText(branch.name);
+  const code = normalizeText(branch.code);
+
+  return city.includes('ho chi minh') || name.includes('ho chi minh') || code.includes('hcm');
+};
+
+const getAllowedBranch = (list: Branch[]) => list.find(isHoChiMinhBranch) ?? null;
+
 // Language option component
 // const LanguageOption = ({ value }: { value: string }) => {
 //   const flags = {
@@ -57,12 +75,14 @@ export default function SelectionModal() {
         const response = await branchApi.getActivePublic({ page: 0, size: 100 });
         
         if (response.result && response.result.content) {
-          setBranches(response.result.content);
+          const fetchedBranches = response.result.content;
+          setBranches(fetchedBranches);
           
-          // Auto-set first branch if no branch in localStorage
-          if (!localStorage.getItem('branchId') && response.result.content.length > 0) {
-            const firstBranch = response.result.content[0];
-            setSelectedBranch(firstBranch.id);
+          const allowedBranch = getAllowedBranch(fetchedBranches);
+          if (allowedBranch) {
+            setSelectedBranch(allowedBranch.id);
+          } else if (!localStorage.getItem('branchId') && fetchedBranches.length > 0) {
+            setSelectedBranch(fetchedBranches[0].id);
           }
         }
       } catch (error) {
@@ -76,7 +96,7 @@ export default function SelectionModal() {
 
   useEffect(() => {
     // setSelectedLanguage(currentLanguage);
-    if (currentBranch?.id) {
+    if (currentBranch?.id && isHoChiMinhBranch(currentBranch)) {
       setSelectedBranch(currentBranch.id);
     }
   }, [currentBranch]);
@@ -84,8 +104,13 @@ export default function SelectionModal() {
   const handleClose = () => {
     // Set default: en and first active branch
     // dispatch(setLanguage("en"));
-    if (branches.length > 0) {
-      dispatch(setBranchDetails(branches[0]));
+    const allowedBranch = getAllowedBranch(branches);
+    const fallbackBranch = branches[0];
+
+    if (allowedBranch) {
+      dispatch(setBranchDetails(allowedBranch));
+    } else if (fallbackBranch) {
+      dispatch(setBranchDetails(fallbackBranch));
     }
   };
 
@@ -94,8 +119,12 @@ export default function SelectionModal() {
     
     // Find and set full branch details
     const selectedBranchData = branches.find(b => b.id === selectedBranch);
-    if (selectedBranchData) {
+    const allowedBranch = getAllowedBranch(branches);
+
+    if (selectedBranchData && isHoChiMinhBranch(selectedBranchData)) {
       dispatch(setBranchDetails(selectedBranchData));
+    } else if (allowedBranch) {
+      dispatch(setBranchDetails(allowedBranch));
     }
   };
 
@@ -155,7 +184,16 @@ export default function SelectionModal() {
                 <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
               </div>
             ) : (
-              <Select value={selectedBranch} onValueChange={setSelectedBranch}>
+              <Select
+                value={selectedBranch}
+                onValueChange={(value) => {
+                  const nextBranch = branches.find(b => b.id === value);
+                  if (!nextBranch || !isHoChiMinhBranch(nextBranch)) {
+                    return;
+                  }
+                  setSelectedBranch(value);
+                }}
+              >
                 <SelectTrigger className="w-full justify-start text-left">
                   <SelectValue placeholder="Chọn chi nhánh" />
                 </SelectTrigger>
@@ -164,6 +202,7 @@ export default function SelectionModal() {
                     <SelectItem 
                       key={branch.id} 
                       value={branch.id}
+                      disabled={!isHoChiMinhBranch(branch)}
                       className="group"
                     >
                       <div className="flex flex-col">

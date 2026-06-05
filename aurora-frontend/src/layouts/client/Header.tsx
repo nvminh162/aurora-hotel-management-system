@@ -28,6 +28,24 @@ import {
 } from "@/components/ui/select";
 import { Search, Menu } from "lucide-react";
 
+const normalizeText = (value?: string) =>
+  (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const isHoChiMinhBranch = (branch: Branch) => {
+  const city = normalizeText(branch.city);
+  const name = normalizeText(branch.name);
+  const code = normalizeText(branch.code);
+
+  return city.includes('ho chi minh') || name.includes('ho chi minh') || code.includes('hcm');
+};
+
+const getAllowedBranch = (list: Branch[]) => list.find(isHoChiMinhBranch) ?? null;
+
 // Language option component
 // const LanguageOption = ({ value }: { value: string }) => {
 //   const flags = {
@@ -77,6 +95,22 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
+    if (branches.length === 0) {
+      return;
+    }
+
+    const allowedBranch = getAllowedBranch(branches);
+    if (!allowedBranch) {
+      return;
+    }
+
+    if (currentBranch?.id !== allowedBranch.id) {
+      dispatch(setBranchDetails(allowedBranch));
+      window.location.reload();
+    }
+  }, [branches, currentBranch, dispatch]);
+
+  useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
         setIsScrolled(true);
@@ -110,7 +144,7 @@ export default function Header() {
   const handleBranchChange = (value: string) => {
     // Find and set full branch details
     const selectedBranch = branches.find(b => b.id === value);
-    if (selectedBranch) {
+    if (selectedBranch && isHoChiMinhBranch(selectedBranch)) {
       dispatch(setBranchDetails(selectedBranch));
       
       // Reload page to apply new branch
@@ -206,6 +240,7 @@ export default function Header() {
                         <SelectItem 
                           key={branch.id} 
                           value={branch.id}
+                          disabled={!isHoChiMinhBranch(branch)}
                           className="cursor-pointer hover:bg-blue-600 hover:text-white py-2 px-2 my-1"
                         >
                           <div className="flex flex-col gap-0.5">
@@ -337,7 +372,11 @@ export default function Header() {
                           {branches
                             .filter(branch => branch.city === city)
                             .map((branch) => (
-                              <SelectItem key={branch.id} value={branch.id}>
+                              <SelectItem
+                                key={branch.id}
+                                value={branch.id}
+                                disabled={!isHoChiMinhBranch(branch)}
+                              >
                                 <div className="flex flex-col">
                                   <span className="font-medium">
                                     {branch.name} ({branch.code})
