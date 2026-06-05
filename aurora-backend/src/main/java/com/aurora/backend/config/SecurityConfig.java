@@ -96,6 +96,7 @@ public class SecurityConfig {
             "/api/v1/bookings/public/**",
             "/api/v1/health",
             "/api/v1/ping",
+                "/api/v1/ci-check",
     };
     private final CustomJwtDecoder customJwtDecoder;
     private final CustomJwtAuthenticationConverter customJwtAuthenticationConverter;

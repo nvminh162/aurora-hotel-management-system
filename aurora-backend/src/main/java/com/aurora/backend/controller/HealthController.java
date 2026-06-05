@@ -50,4 +50,14 @@ public class HealthController {
     public ResponseEntity<String> ping() {
         return ResponseEntity.ok("pong");
     }
+
+    /**
+     * Simple CI/CD verification endpoint
+     *
+     * @return OK response
+     */
+    @GetMapping("/ci-check")
+    public ResponseEntity<String> ciCheck() {
+        return ResponseEntity.ok("ok");
+    }
 }

@@ -9,6 +9,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class AuroraBackendApplication {
 
+    // CI/CD test trigger: no logic changes.
+
     public static void main(String[] args) {
         Dotenv dotenv = Dotenv.configure()
                 .ignoreIfMissing()
