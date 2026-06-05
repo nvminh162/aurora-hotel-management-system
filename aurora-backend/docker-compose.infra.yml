@@ -2,7 +2,7 @@ services:
   rag_postgres:
     image: pgvector/pgvector:pg16
     container_name: rag_postgres
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
@@ -20,7 +20,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4:8
     container_name: aurora_pgadmin
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
@@ -36,7 +36,7 @@ services:
   redis:
     image: redis:7.2-alpine
     container_name: aurora-redis
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
@@ -52,7 +52,7 @@ services:
   redisinsight:
     image: redis/redisinsight:latest
     container_name: aurora_redisinsight
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
